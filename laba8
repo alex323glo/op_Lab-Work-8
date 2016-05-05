@@ -1,0 +1,240 @@
+// laba3.1.cpp: определяет точку входа для консольного приложения.
+//
+/*
+1.Створити текстовий файл. 
+
+2.Сформувати новий текстовий файл, що складається з рядків вихідного файлу, 
+у яких вилучені всі двосимвольні слова.
+
+3.Визначити і дописати в кінець нового файлу кількість вилучених слів. 
+
+4.Вивести вміст вихідного і створеного файлів.
+*/
+
+#include "stdafx.h"
+#include <stdio.h>
+#include <stdlib.h>
+#include <iostream>
+#include <time.h>
+#include <math.h>
+#include <string.h>
+
+using namespace std;
+
+const int N = 2000;
+
+const char *oldAddres = "old_file.txt";
+const char *newAddres = "new_file.txt";
+
+void makeFile(const char*, const char*);
+void format(char*, int&);
+void output(const char*);
+void add(const char*);
+
+bool printMenu(const char*,const char*);
+
+/*int main()
+{
+	add(oldAddres);
+	output(oldAddres);
+	makeFile(oldAddres, newAddres);
+	output(oldAddres);
+	output(newAddres);
+	system("pause");
+    return 0;
+}*/
+
+int main()
+{
+	bool exit;
+	do
+	{
+		exit = false;
+		exit = printMenu(oldAddres, newAddres);
+	} while (exit==false);
+}
+
+void makeFile(const char* oldAddr, const char* newAddr)
+{
+	FILE *nf, *of;
+	char p[N];
+	int num=0;
+
+	if ((!fopen_s(&nf, newAddr/*"new_file.txt"*/, "wt+")) && (!fopen_s(&of, oldAddr/*"old_file.txt"*/, "rt")))
+	{
+		while (!feof(of))
+		{
+			if (fgets(p, sizeof(p), of) == NULL)
+				cout << "ERROR2: " << errno << endl;
+			else
+			{
+				////cout << "p:\n|" << p << '|' << endl;
+				format(p, num);
+				if (fputs(p, nf) == EOF)
+					cout << "ERROR3: " << errno << endl;
+			}
+		}
+		////cout << "\nNumber of deleted words = " << num << endl;
+
+		/*char helper0[3];
+		helper0[0] = 13; 
+		helper0[1] = 10;
+		if (fputs(helper0, nf) == EOF)
+			cout << "ERROR4: " << errno << endl;
+		*/
+		/*char help[10];
+		_itoa_s(num,help,10);//
+		cout << "help: |" << help << '|' << endl;
+		//help[0] = 13;
+		if (fputs(help, nf) == EOF)
+			cout << "ERROR5: " << errno << endl;*/
+		fprintf_s(nf, "\n\n%s = %d\n","Number of deleted words",num);
+
+		fclose(of);
+		fclose(nf);
+	}
+	else
+		cout << "ERROR1: " << errno << endl;
+
+	system("pause");
+}
+
+void format(char *p, int &num)
+{
+	char *helper1 = p;									//покажчик на начало слова
+	char *helper2 = p;									//покажчик на конец слова (на первый пробел после helper1)
+	char helper[N] = {'\0'};							//вспомагательная строка 
+	while (helper1!=NULL)								//пока helper1 не указывает на пустоту
+	{
+		if (strchr(helper1, ' '))						//если после helper1 имееться "пробел"
+		{
+			helper2 = strchr(helper1, ' ');					//теперь helper2 указывает на первый "пробел" после helper1
+
+			if ((strlen(helper1) - strlen(helper2) == 2) && (helper1[0] != ' ') && (helper1[0] != 9))//если длинна слова меньше 3 и helper1 не указывает на "пробел"
+			{
+				cout << "DETECTED:";
+				//if (strlen(helper1) - strlen(helper2) == 2)					//если длинна слова = 2
+				cout << helper1[0] << helper1[1] << endl;
+				//else cout << helper1[0] << endl;							//если длинна слова = 1
+				num++;													//увеличение счётчика искомых слов (с длинной <3 и >0)
+			}
+			else
+			{
+				////cout << "1helper1: |" << helper1 << '|' << endl;//
+				////cout << "1helper: |" << helper << '|' << endl;//
+
+				strncat_s(helper, sizeof(helper) - strlen(helper), helper1, strlen(helper1) - strlen(helper2));//если длинна слова >=3 , тогда копируем слово в конец вспомагательной строки helper
+				strcat_s(helper, sizeof(helper)-strlen(helper)," ");
+			}
+			helper1 = helper2+1;				//теперь helper1 указывает на следующую позицию после "пробела"
+		}
+		else											//если после helper1 не имееться "пробела"
+		{
+			if (strlen(helper1) == 2)							//если длинна слова меньше 3
+			{
+				cout << "DETECTED:";
+				/*switch (strlen(helper1))
+				{
+				case 2: cout << helper1[0] << helper1[1] << endl; break;	//если длинна слова = 2
+				case 1: cout << helper1[0] << endl; break;					//если длинна слова = 1
+				}*/
+				cout << helper1[0] << helper1[1] << endl;
+				num++;													//увеличение счётчика искомых слов (с длинной <3 и >0)
+			}
+			else
+			{
+				////cout << "2helper1: |" << helper1 << '|' << endl;
+				////cout << "2helper: |" << helper << '|' << endl;
+				strncat_s(helper, sizeof(helper) - strlen(helper), helper1, strlen(helper1));//если длинна слова >=3 , тогда копируем слово в конец вспомагательной строки helper
+				//strcat_s(helper, sizeof(helper) - strlen(helper), " ");
+			}
+			helper1 = NULL;												//устанавливаем helper1 на пустоту, так как завершающая итерация
+		}
+	}
+
+	strncpy_s(p, strlen(p), helper,strlen(p)-1);						//копируем вспомагательную строку helper в даную стоку p				
+}
+
+void output(const char*fileAddr)
+{
+	int ch;
+	cout << "Do you want to clean consol? ";
+	cin >> ch;
+	if (ch) system("cls");
+
+	char p[N];
+	FILE *f;
+	if (!fopen_s(&f, fileAddr, "rt"))
+	{
+		cout << '\n';
+		while (!feof(f))
+		{
+			if (fgets(p, sizeof(p), f) == NULL)
+				cout << "ERROR6: " << errno << endl;
+			else
+			{
+				cout << p;
+			}
+		}
+		cout << '\n';
+		fclose(f);
+	}
+	else cout << "ERROR5: " << errno << endl;
+	system("pause");
+}
+
+
+
+void add(const char* fileName)
+{
+	char str[N];
+	cout << "Add file:" << endl;
+	cin.getline(str, sizeof(str), '!');
+	FILE *f;
+	if (!fopen_s(&f, fileName, "at"))
+	{
+		if (fputs(str, f) == EOF)
+			cout << "ERROR2(Add): " << errno << endl;
+		fclose(f);
+	}
+	else cout << "ERROR1(Add): " << errno << endl;
+	system("pause");
+}
+
+bool printMenu(const char* fileName1, const char* fileName2)
+{
+	system("cls");
+	FILE *f;
+	char strd[N]; //= new char[200];
+
+	if (!fopen_s(&f, fileName1, "rt"))
+	{
+		cout << '\n';
+		while (!feof(f))
+		{
+			if (fgets(strd, sizeof(strd), f) == NULL)
+				cout << "ERROR2(menu): " << errno << endl;
+			else
+			{
+				cout << strd;
+			}
+		}
+		cout << '\n';
+		fclose(f);
+		//delete[] strd;
+	}
+	else cout << "ERROR1(nenu): " << errno << endl;
+	
+	
+	printf("\n1 - add file (put ! to finish writing);\n2 - search needed words;\n3 - remove existing file;\n");
+	char key;
+	cin >> key; cout << "\n";
+	switch (key)
+	{
+	case '1': add(fileName1); return false;
+	case '2': makeFile(fileName1, fileName2); output(fileName2); return false;
+	case '3': remove(fileName1); return false;
+	case 27: return true;
+	default: return true;
+	}
+}
